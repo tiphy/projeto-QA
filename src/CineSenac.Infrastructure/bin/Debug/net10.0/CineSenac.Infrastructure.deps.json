@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "CineSenac.Infrastructure/1.0.0": {
+        "dependencies": {
+          "CineSenac.Domain": "1.0.0"
+        },
+        "runtime": {
+          "CineSenac.Infrastructure.dll": {}
+        }
+      },
+      "CineSenac.Domain/1.0.0": {
+        "runtime": {
+          "CineSenac.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "CineSenac.Infrastructure/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CineSenac.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CineSenac.Application/CineSenac.Application.csproj" />
+    <Project Path="src/CineSenac.Domain/CineSenac.Domain.csproj" />
+    <Project Path="src/CineSenac.Infrastructure/CineSenac.Infrastructure.csproj" />
+    <Project Path="src/CineSenac.Web/CineSenac.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CineSenac.IntegrationTests/CineSenac.IntegrationTests.csproj" />
+    <Project Path="tests/CineSenac.Specs/CineSenac.Specs.csproj" />
+    <Project Path="tests/CineSenac.UnitTests/CineSenac.UnitTests.csproj" />
+  </Folder>
+</Solution>
