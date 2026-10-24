@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AlocaSenac.Application/AlocaSenac.Application.csproj" />
+    <Project Path="src/AlocaSenac.Domain/AlocaSenac.Domain.csproj" />
+    <Project Path="src/AlocaSenac.Infrastructure/AlocaSenac.Infrastructure.csproj" />
+    <Project Path="src/AlocaSenac.Web/AlocaSenac.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AlocaSenac.IntegrationTests/AlocaSenac.IntegrationTests.csproj" />
+    <Project Path="tests/AlocaSenac.Specs/AlocaSenac.Specs.csproj" />
+    <Project Path="tests/AlocaSenac.UnitTests/AlocaSenac.UnitTests.csproj" />
+  </Folder>
+</Solution>
