@@ -1,0 +1,17 @@
+@page
+@model AlocaSenac.Web.Pages.Relatorios.IndexModel
+@{
+    ViewData["Title"] = "Relatórios";
+}
+
+<h1>Relatórios</h1>
+<p class="muted">Métricas consolidadas de utilização dos ambientes.</p>
+<section class="grid cards" aria-label="Indicadores consolidados">
+    <article class="card"><h2>Taxa de ocupação</h2><p class="metric">@Model.TaxaOcupacao%</p></article>
+    <article class="card"><h2>Horas reservadas</h2><p class="metric">@Model.HorasReservadas</p></article>
+    <article class="card"><h2>Agendamentos no período</h2><p class="metric">@Model.TotalAgendamentos</p></article>
+</section>
+<section class="grid cards">
+    <article class="panel"><h2>Utilização por tipo de sala</h2><p class="muted">Gráfico de utilização por tipo será exibido aqui.</p></article>
+    <article class="panel"><h2>Utilização por dia da semana</h2><p class="muted">Gráfico de utilização por dia será exibido aqui.</p></article>
+</section>

@@ -1,0 +1,37 @@
+@page
+@model AlocaSenac.Web.Pages.Agendamentos.IndexModel
+@{
+    ViewData["Title"] = "Agendamentos";
+}
+
+<header class="actions">
+    <div><h1>Agendamentos</h1><p class="muted">Gestão das reservas e solicitações de uso.</p></div>
+    <button type="button" onclick="document.getElementById('modal-agendamento').showModal()">Novo agendamento</button>
+</header>
+<form class="filters" method="get">
+    <label>Período <input type="date" name="periodo" /></label>
+    <label>Sala <select name="sala"><option value="">Todas</option><option>Sala 101</option><option>Laboratório 202</option></select></label>
+    <label>Status <select name="status"><option value="">Todos</option><option>Pendente</option><option>Aprovado</option><option>Recusado</option></select></label>
+    <button type="submit">Filtrar</button>
+</form>
+<section class="panel">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Sala</th><th>Responsável</th><th>Início</th><th>Término</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>
+            @if (Model.Agendamentos.Count == 0)
+            {
+                <tr><td colspan="6">Nenhum agendamento encontrado.</td></tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Agendamentos)
+                {
+                    <tr><td>@item.Sala</td><td>@item.Professor</td><td>@item.Inicio.ToString("dd/MM/yyyy HH:mm")</td><td>@item.Fim.ToString("dd/MM/yyyy HH:mm")</td><td><span class="status">Pendente</span></td><td><button type="button">Aprovar</button> <button class="secondary" type="button">Recusar</button></td></tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+@await Html.PartialAsync("_ModalAgendamento")

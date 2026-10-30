@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Senac</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #17324d; background: #eef3f7; }
+        * { box-sizing: border-box; }
+        body { display: grid; min-height: 100vh; margin: 0; place-items: center; padding: 1rem; }
+        main { width: min(100%, 440px); padding: 2rem; background: #fff; border: 1px solid #dce5ec; border-radius: 12px; box-shadow: 0 12px 30px #17324d12; }
+        h1, p { margin-top: 0; }
+        label { display: grid; gap: .4rem; margin: 1rem 0; }
+        input { width: 100%; padding: .7rem; border: 1px solid #bccbd7; border-radius: 5px; font: inherit; }
+        button { width: 100%; padding: .75rem; color: #fff; background: #07528a; border: 0; border-radius: 6px; font: inherit; cursor: pointer; }
+        .muted { color: #607387; }
+    </style>
+</head>
+<body>
+    <main>
+        @RenderBody()
+    </main>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

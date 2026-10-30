@@ -1,0 +1,23 @@
+@page
+@model AlocaSenac.Web.Pages.Salas.IndexModel
+@{
+    ViewData["Title"] = "Salas";
+}
+
+<header class="actions">
+    <div><h1>Salas</h1><p class="muted">Catálogo de ambientes disponíveis.</p></div>
+    <button type="button" onclick="document.getElementById('modal-nova-sala').showModal()">Cadastrar sala</button>
+</header>
+<form class="filters" method="get">
+    <label>Buscar <input type="search" name="busca" placeholder="Nome ou recurso" /></label>
+    <label>Bloco <select name="bloco"><option value="">Todos</option><option>Bloco A</option><option>Bloco B</option></select></label>
+    <label>Andar <select name="andar"><option value="">Todos</option><option>Térreo</option><option>1º andar</option><option>2º andar</option></select></label>
+    <label>Tipo <select name="tipo"><option value="">Todos</option><option>Sala de aula</option><option>Laboratório</option><option>Auditório</option></select></label>
+    <button type="submit">Filtrar</button>
+</form>
+<section class="grid cards" aria-label="Catálogo de salas">
+    <article class="card"><h2>Sala 101</h2><p class="muted">Bloco A · 1º andar · Sala de aula</p><p>Capacidade: 30 pessoas</p><a class="button secondary" asp-page="/Salas/Detalhes" asp-route-id="1">Ver detalhes</a></article>
+    <article class="card"><h2>Laboratório 202</h2><p class="muted">Bloco B · 2º andar · Laboratório</p><p>Capacidade: 24 pessoas</p><a class="button secondary" asp-page="/Salas/Detalhes" asp-route-id="2">Ver detalhes</a></article>
+    <article class="card"><h2>Auditório Central</h2><p class="muted">Bloco A · Térreo · Auditório</p><p>Capacidade: 120 pessoas</p><a class="button secondary" asp-page="/Salas/Detalhes" asp-route-id="3">Ver detalhes</a></article>
+</section>
+@await Html.PartialAsync("_ModalNovaSala")

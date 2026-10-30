@@ -2,7 +2,22 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Adiciona OpenAPI
 builder.Services.AddOpenApi();
-builder.Services.AddRazorPages();
+builder.Services
+    .AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login";
+        options.AccessDeniedPath = "/Login";
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Dashboard");
+    options.Conventions.AuthorizeFolder("/Salas");
+    options.Conventions.AuthorizeFolder("/Agendamentos");
+    options.Conventions.AuthorizeFolder("/Relatorios");
+    options.Conventions.AuthorizeFolder("/Configuracoes");
+});
 builder.Services.AddSingleton<AlocacoesStore>();
 
 var app = builder.Build();
@@ -11,6 +26,8 @@ var app = builder.Build();
 app.MapOpenApi();
 
 // A interface fica na raiz; o contrato OpenAPI continua disponível em /openapi/v1.json.
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapRazorPages();
 
 // --- Endpoints de Negócio: AlocaSenac ---

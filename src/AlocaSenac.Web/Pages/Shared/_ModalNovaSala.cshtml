@@ -1,0 +1,19 @@
+<dialog id="modal-nova-sala" aria-labelledby="modal-nova-sala-titulo">
+    <form method="post">
+        <h2 id="modal-nova-sala-titulo">Cadastrar sala</h2>
+        <label>Nome da sala <input name="Nome" required maxlength="120" /></label>
+        <label>Bloco <input name="Bloco" maxlength="60" /></label>
+        <label>Andar <input name="Andar" maxlength="30" /></label>
+        <label>Tipo
+            <select name="Tipo">
+                <option>Sala de aula</option>
+                <option>Laboratório</option>
+                <option>Auditório</option>
+            </select>
+        </label>
+        <div class="actions">
+            <button type="submit">Salvar sala</button>
+            <button class="secondary" type="button" onclick="this.closest('dialog').close()">Cancelar</button>
+        </div>
+    </form>
+</dialog>

@@ -1,0 +1,17 @@
+@page "{id:int}"
+@model AlocaSenac.Web.Pages.Salas.EditarModel
+@{
+    ViewData["Title"] = "Editar sala";
+}
+
+<h1>Editar sala</h1>
+<p class="muted">Atualize as informações do ambiente selecionado.</p>
+<form method="post" class="panel">
+    <input type="hidden" asp-for="Id" />
+    <label>Nome <input name="Nome" required maxlength="120" /></label>
+    <label>Bloco <input name="Bloco" maxlength="60" /></label>
+    <label>Andar <input name="Andar" maxlength="30" /></label>
+    <label>Tipo <select name="Tipo"><option>Sala de aula</option><option>Laboratório</option><option>Auditório</option></select></label>
+    <label>Capacidade <input name="Capacidade" type="number" min="1" /></label>
+    <div class="actions"><button type="submit">Salvar alterações</button><a class="button secondary" asp-page="/Salas/Index">Cancelar</a></div>
+</form>

@@ -1,0 +1,21 @@
+@page
+@model AlocaSenac.Web.Pages.Login.IndexModel
+@{
+    Layout = "_LoginLayout";
+    ViewData["Title"] = "Acesso institucional";
+}
+
+<h1>Acesso institucional</h1>
+<p class="muted">Gestão de salas e espaços acadêmicos Senac</p>
+@if (!string.IsNullOrEmpty(Model.Erro))
+{
+    <p role="alert">@Model.Erro</p>
+}
+<form method="post" asp-page-handler="Login">
+    <label for="email">E-mail institucional</label>
+    <input id="email" asp-for="Email" type="email" autocomplete="username" required />
+    <label for="senha">Senha</label>
+    <input id="senha" asp-for="Senha" type="password" autocomplete="current-password" required />
+    <p class="muted">Acesso de demonstração: admin@gmail.com / 1234</p>
+    <button type="submit">Entrar</button>
+</form>

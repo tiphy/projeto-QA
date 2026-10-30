@@ -1,0 +1,30 @@
+@page
+@model AlocaSenac.Web.Pages.Configuracoes.IndexModel
+@{
+    ViewData["Title"] = "Configurações";
+}
+
+<h1>Configurações</h1>
+<p class="muted">Preferências do perfil e regras de funcionamento do sistema.</p>
+<form method="post" class="grid">
+    <section class="panel">
+        <h2>Perfil</h2>
+        <label>Nome <input name="Nome" value="Administrador" /></label>
+        <label>E-mail <input name="Email" type="email" value="admin@senac.br" /></label>
+    </section>
+    <section class="panel">
+        <h2>Horários de funcionamento</h2>
+        <div class="filters"><label>Abertura <input name="Abertura" type="time" value="07:00" /></label><label>Fechamento <input name="Fechamento" type="time" value="22:00" /></label></div>
+    </section>
+    <section class="panel">
+        <h2>Regras de antecedência</h2>
+        <label>Antecedência mínima (horas) <input name="AntecedenciaMinima" type="number" min="0" value="24" /></label>
+        <label>Antecedência máxima (dias) <input name="AntecedenciaMaxima" type="number" min="1" value="90" /></label>
+    </section>
+    <section class="panel">
+        <h2>Notificações</h2>
+        <label><span><input name="NotificacoesEmail" type="checkbox" checked /> Receber notificações por e-mail</span></label>
+        <label><span><input name="AvisosAgendamento" type="checkbox" checked /> Avisar sobre alterações nos agendamentos</span></label>
+    </section>
+    <div><button type="submit">Salvar configurações</button></div>
+</form>

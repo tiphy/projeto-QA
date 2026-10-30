@@ -1,0 +1,25 @@
+@page "{id:int}"
+@model AlocaSenac.Web.Pages.Salas.DetalhesModel
+@{
+    ViewData["Title"] = "Detalhes da sala";
+}
+
+<h1>Detalhes da sala</h1>
+<p class="muted">Informações e disponibilidade do ambiente selecionado.</p>
+<section class="panel">
+    <h2>Sala @Model.Id — Sala de aula</h2>
+    <p>Bloco A · 1º andar · Capacidade: 30 pessoas</p>
+    <a class="button secondary" asp-page="/Salas/Editar" asp-route-id="@Model.Id">Editar sala</a>
+</section>
+<section class="panel" style="margin-top: 1rem">
+    <h2>Grade de horários</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Horário</th><th>Segunda</th><th>Terça</th><th>Quarta</th><th>Quinta</th><th>Sexta</th></tr></thead>
+            <tbody>
+                <tr><th>08:00–12:00</th><td>Disponível</td><td>Ocupada</td><td>Disponível</td><td>Disponível</td><td>Ocupada</td></tr>
+                <tr><th>13:00–17:00</th><td>Ocupada</td><td>Disponível</td><td>Disponível</td><td>Ocupada</td><td>Disponível</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>

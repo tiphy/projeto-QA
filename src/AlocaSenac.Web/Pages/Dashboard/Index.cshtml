@@ -1,0 +1,55 @@
+@page
+@model AlocaSenac.Web.Pages.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<header>
+    <h1>Dashboard</h1>
+    <p class="muted">Visão geral da ocupação e das solicitações de salas.</p>
+</header>
+<section class="grid cards" aria-label="Indicadores">
+    <article class="card"><h2>Salas cadastradas</h2><p class="metric">@Model.TotalSalas</p></article>
+    <article class="card"><h2>Agendamentos</h2><p class="metric">@Model.TotalAgendamentos</p></article>
+    <article class="card"><h2>Solicitações pendentes</h2><p class="metric">@Model.SolicitacoesPendentes</p></article>
+    <article class="card"><h2>Ocupação semanal</h2><p class="metric">@Model.OcupacaoSemanal%</p></article>
+</section>
+<section class="panel">
+    <div class="actions">
+        <h2>Agenda</h2>
+        <label>Período
+            <select aria-label="Visualização da agenda">
+                <option>Semana</option>
+                <option>Dia</option>
+            </select>
+        </label>
+        <input type="date" aria-label="Data da agenda" />
+    </div>
+    <p class="muted">Visualização semanal/diária da ocupação das salas.</p>
+</section>
+<section class="panel" style="margin-top: 1rem">
+    <h2>Solicitações recentes</h2>
+    @if (Model.Agendamentos.Count == 0)
+    {
+        <p class="muted">Nenhuma solicitação cadastrada.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Sala</th><th>Responsável</th><th>Data</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var agendamento in Model.Agendamentos)
+                    {
+                        <tr>
+                            <td>@agendamento.Sala</td>
+                            <td>@agendamento.Professor</td>
+                            <td>@agendamento.Inicio.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><span class="status">Pendente</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

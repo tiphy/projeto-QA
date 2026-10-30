@@ -1,0 +1,13 @@
+<dialog id="modal-agendamento" aria-labelledby="modal-agendamento-titulo">
+    <form method="post">
+        <h2 id="modal-agendamento-titulo">Novo agendamento</h2>
+        <label>Sala <input name="Sala" required maxlength="120" /></label>
+        <label>Responsável <input name="Responsavel" required maxlength="120" /></label>
+        <label>Início <input name="Inicio" type="datetime-local" required /></label>
+        <label>Término <input name="Fim" type="datetime-local" required /></label>
+        <div class="actions">
+            <button type="submit">Enviar solicitação</button>
+            <button class="secondary" type="button" onclick="this.closest('dialog').close()">Cancelar</button>
+        </div>
+    </form>
+</dialog>

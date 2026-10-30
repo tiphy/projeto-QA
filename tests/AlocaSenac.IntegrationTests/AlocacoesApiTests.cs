@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Encodings.Web;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace AlocaSenac.IntegrationTests;
@@ -11,7 +11,10 @@ public sealed class AlocacoesApiTests : IClassFixture<WebApplicationFactory<Prog
 
     public AlocacoesApiTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
     }
 
     [Fact]
@@ -24,18 +27,62 @@ public sealed class AlocacoesApiTests : IClassFixture<WebApplicationFactory<Prog
         Assert.Equal(HttpStatusCode.OK, openApi.StatusCode);
     }
 
-    [Theory]
-    [InlineData("Solicitante", "Solicitar espaço")]
-    [InlineData("Responsável", "Visão de acompanhamento da agenda")]
-    [InlineData("Administrador", "Remover")]
-    public async Task DeveAbrirCadaPerfilPeloLinkDeNavegacao(string persona, string conteudoEsperado)
+    [Fact]
+    public async Task DeveRedirecionarRaizParaLogin()
     {
-        var resposta = await _client.GetAsync($"/?persona={UrlEncoder.Default.Encode(persona)}");
+        var resposta = await _client.GetAsync("/");
+
+        Assert.Equal(HttpStatusCode.Redirect, resposta.StatusCode);
+        Assert.Equal("/Login", resposta.Headers.Location?.OriginalString);
+    }
+
+    [Theory]
+    [InlineData("/Login/Index", "Acesso institucional")]
+    [InlineData("/Dashboard/Index", "Dashboard")]
+    [InlineData("/Salas/Index", "Catálogo de ambientes")]
+    [InlineData("/Salas/Editar/1", "Editar sala")]
+    [InlineData("/Salas/Detalhes/1", "Detalhes da sala")]
+    [InlineData("/Agendamentos/Index", "Gestão das reservas")]
+    [InlineData("/Relatorios/Index", "Métricas consolidadas")]
+    [InlineData("/Configuracoes/Index", "Horários de funcionamento")]
+    public async Task DeveAbrirTelasDoSistema(string pagina, string conteudoEsperado)
+    {
+        if (pagina != "/Login/Index")
+        {
+            await EntrarComoAdministrador();
+        }
+
+        var resposta = await _client.GetAsync(pagina);
         var html = await resposta.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
-        Assert.Contains("aria-current=\"page\"", html);
         Assert.Contains(conteudoEsperado, html);
+    }
+
+    [Fact]
+    public async Task DeveAutenticarComCredenciaisDeDemonstracao()
+    {
+        await EntrarComoAdministrador();
+
+        var resposta = await _client.GetAsync("/Dashboard/Index");
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeveRejeitarCredenciaisInvalidas()
+    {
+        var token = await ObterTokenAntiforgery();
+        var resposta = await _client.PostAsync("/Login?handler=Login", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Email"] = "admin@gmail.com",
+            ["Senha"] = "senha-incorreta",
+            ["__RequestVerificationToken"] = token
+        }));
+        var html = await resposta.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        Assert.Contains("E-mail ou senha inválidos.", WebUtility.HtmlDecode(html));
     }
 
     [Fact]
@@ -91,4 +138,27 @@ public sealed class AlocacoesApiTests : IClassFixture<WebApplicationFactory<Prog
         string Professor,
         DateTime Inicio,
         DateTime Fim);
+
+    private async Task EntrarComoAdministrador()
+    {
+        var token = await ObterTokenAntiforgery();
+        var resposta = await _client.PostAsync("/Login?handler=Login", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Email"] = "admin@gmail.com",
+            ["Senha"] = "1234",
+            ["__RequestVerificationToken"] = token
+        }));
+
+        Assert.Equal(HttpStatusCode.Redirect, resposta.StatusCode);
+    }
+
+    private async Task<string> ObterTokenAntiforgery()
+    {
+        var resposta = await _client.GetAsync("/Login");
+        var html = await resposta.Content.ReadAsStringAsync();
+        var token = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+
+        Assert.True(token.Success, "O formulário de login deve renderizar o token antiforgery.");
+        return token.Groups[1].Value;
+    }
 }
