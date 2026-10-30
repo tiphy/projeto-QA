@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AlocaSenac.Web\AlocaSenac.Web.csproj" />
     <ProjectReference Include="..\..\src\AlocaSenac.Domain\AlocaSenac.Domain.csproj" />
     <ProjectReference Include="..\..\src\AlocaSenac.Application\AlocaSenac.Application.csproj" />
   </ItemGroup>
