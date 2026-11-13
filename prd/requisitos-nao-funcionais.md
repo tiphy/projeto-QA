@@ -1,0 +1,17 @@
+# Requisitos não funcionais
+
+As metas abaixo são critérios mensuráveis propostos para a RTM, não resultados medidos nem garantias da implementação atual. A aplicação usa armazenamento em memória; portanto, metas que pressupõem persistência, múltiplas instâncias ou dados de produção dependem de evolução arquitetural e validação.
+
+| ID | Categoria | Requisito e meta mensurável | Implementação/estado observado | Risco para a RTM |
+|---|---|---|---|---|
+| RNF01 | Desempenho | Com 50 utilizadores simultâneos durante 5 minutos e conjunto de 10.000 reservas, obter p95 inferior a 500 ms nas consultas e criações válidas, com pelo menos 99,9% de respostas sem erro de transporte ou servidor. | Existe um teste exploratório `tests/load/smoke.py` que mede GET, p50/p95 e falhas; o plano documenta 500 pedidos a 10 concorrentes. Não mede gravações concorrentes nem valida este patamar de 50 utilizadores/10.000 registos. | Alto |
+| RNF02 | Segurança/Autorização | Em 100% dos testes de autorização, pedidos sem sessão a páginas e operações protegidas devem resultar em redirecionamento para login ou HTTP 401/403; 0 operações de perfil não autorizado devem alterar dados. | Há autenticação por cookie e proteção das páginas indicadas em `Program.cs`; as credenciais são fixas de demonstração, não existem políticas por perfil e as rotas `/api/alocacoes` não exigem autorização. | Alto |
+| RNF03 | Validação de entrada | 100% dos casos inválidos definidos no contrato (campos obrigatórios ausentes/em branco, início igual ou posterior ao término e identificadores inexistentes) devem ser rejeitados com HTTP 400 ou 404, sem criar nem alterar dados; intervalos conflitantes devem receber HTTP 409. | A API valida sala/professor em branco e `Inicio >= Fim`, verifica conflito de sala e responde 400/409; os restantes campos e regras não são validados de forma abrangente. | Alto |
+| RNF04 | Tratamento seguro de erros | Em 100% dos testes de erro, falhas esperadas devem produzir resposta controlada com código HTTP apropriado e mensagem acionável; 0 respostas devem expor stack trace, segredo ou detalhe interno. | A API apresenta mensagens para validação/conflito e 404 para identificador ausente; não há evidência de um formato uniforme de erro ou testes automatizados para exposição de detalhes. | Médio |
+| RNF05 | Disponibilidade | A API deve atingir pelo menos 99,5% de disponibilidade por mês, calculada como minutos com resposta válida a uma verificação de leitura divididos pelos minutos do período, excluindo manutenção planeada previamente comunicada. | Não há SLI/SLO, endpoint de health check ou teste de disponibilidade contínua documentado. O armazenamento em memória perde as alocações quando o processo reinicia. | Alto |
+
+## Medição e rastreabilidade
+
+- Registar ambiente, versão, conjunto de dados, concorrência, duração, p50, p95, erros e timestamp em cada execução de desempenho.
+- Para disponibilidade, recolher verificações periódicas e calcular o percentual mensal pela fórmula definida no RNF05.
+- Manter evidência de testes positivos e negativos para autorização, validação e tratamento de erros; um requisito só deve ser considerado aceite quando a meta mensurável correspondente for demonstrada.
