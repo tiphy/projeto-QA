@@ -126,6 +126,131 @@ public sealed class AlocacoesApiTests : IClassFixture<WebApplicationFactory<Prog
         Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
     }
 
+    [Fact]
+    public async Task DeveListarSalasDoCatalogo()
+    {
+        var salas = await _client.GetFromJsonAsync<List<SalaDisponibilidadeResponse>>("/api/salas");
+
+        Assert.NotNull(salas);
+        Assert.Contains(salas, sala => sala.Nome == "Sala 101" && sala.Capacidade == 30);
+        Assert.Contains(salas, sala => sala.Nome == "Laboratório 202");
+        Assert.Contains(salas, sala => sala.Nome == "Auditório Central");
+        Assert.All(salas, sala => Assert.Null(sala.Disponivel));
+    }
+
+    [Fact]
+    public async Task DeveInformarDisponibilidadeDasSalasNoHorario()
+    {
+        var inicio = ProximoDiaLivre().AddHours(9);
+        var criada = await _client.PostAsJsonAsync("/api/alocacoes", new CriarAlocacaoRequest("Sala 101", "Ana Souza", inicio, inicio.AddHours(2)));
+        Assert.Equal(HttpStatusCode.Created, criada.StatusCode);
+
+        var salas = await _client.GetFromJsonAsync<List<SalaDisponibilidadeResponse>>(
+            $"/api/salas?inicio={inicio.AddHours(1):yyyy-MM-ddTHH:mm}&fim={inicio.AddHours(3):yyyy-MM-ddTHH:mm}");
+
+        Assert.NotNull(salas);
+        Assert.False(salas.Single(sala => sala.Nome == "Sala 101").Disponivel);
+        Assert.True(salas.Single(sala => sala.Nome == "Laboratório 202").Disponivel);
+    }
+
+    [Theory]
+    [InlineData("?inicio=2030-05-10T10:00")]
+    [InlineData("?inicio=2030-05-10T10:00&fim=2030-05-10T09:00")]
+    public async Task DeveRecusarConsultaDeSalasComIntervaloInvalido(string consulta)
+    {
+        var resposta = await _client.GetAsync($"/api/salas{consulta}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeveCriarAgendamentoPelaTela()
+    {
+        await EntrarComoAdministrador();
+        var inicio = ProximoDiaLivre().AddHours(9);
+
+        var resposta = await EnviarNovoAgendamento("Laboratório 202", "Ana Souza", inicio, inicio.AddHours(1));
+
+        Assert.Equal(HttpStatusCode.Redirect, resposta.StatusCode);
+        var alocacoes = await _client.GetFromJsonAsync<List<AlocacaoResponse>>("/api/alocacoes");
+        Assert.Contains(alocacoes!, alocacao => alocacao.Sala == "Laboratório 202" && alocacao.Inicio == inicio);
+
+        var lista = await _client.GetStringAsync($"/Agendamentos/Index?Periodo={inicio:yyyy-MM-dd}");
+        Assert.Contains("Laboratório 202", WebUtility.HtmlDecode(lista));
+    }
+
+    [Fact]
+    public async Task DeveMostrarConflitoAoAgendarPelaTela()
+    {
+        await EntrarComoAdministrador();
+        var inicio = ProximoDiaLivre().AddHours(14);
+
+        var primeira = await EnviarNovoAgendamento("Auditório Central", "Ana Souza", inicio, inicio.AddHours(2));
+        var sobreposta = await EnviarNovoAgendamento("Auditório Central", "Bruno Lima", inicio.AddHours(1), inicio.AddHours(3));
+        var html = WebUtility.HtmlDecode(await sobreposta.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.Redirect, primeira.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sobreposta.StatusCode);
+        Assert.Contains("Conflito de alocação", html);
+    }
+
+    [Fact]
+    public async Task DeveRecusarIntervaloInvalidoPelaTela()
+    {
+        await EntrarComoAdministrador();
+        var inicio = ProximoDiaLivre().AddHours(10);
+
+        var resposta = await EnviarNovoAgendamento("Sala 101", "Ana Souza", inicio, inicio);
+        var html = WebUtility.HtmlDecode(await resposta.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        Assert.Contains("deve ser anterior ao término", html);
+    }
+
+    [Fact]
+    public async Task DeveRecusarSalaForaDoCatalogoPelaTela()
+    {
+        await EntrarComoAdministrador();
+        var inicio = ProximoDiaLivre().AddHours(10);
+
+        var resposta = await EnviarNovoAgendamento("Sala Inexistente", "Ana Souza", inicio, inicio.AddHours(1));
+        var html = WebUtility.HtmlDecode(await resposta.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        Assert.Contains("Escolha uma sala da lista.", html);
+    }
+
+    [Fact]
+    public async Task DeveFiltrarAgendamentosPorSala()
+    {
+        await EntrarComoAdministrador();
+        var inicio = ProximoDiaLivre().AddHours(8);
+        await EnviarNovoAgendamento("Sala 101", "Ana Souza", inicio, inicio.AddHours(1));
+        await EnviarNovoAgendamento("Laboratório 202", "Bruno Lima", inicio, inicio.AddHours(1));
+
+        var html = WebUtility.HtmlDecode(await _client.GetStringAsync(
+            $"/Agendamentos/Index?Periodo={inicio:yyyy-MM-dd}&Sala={Uri.EscapeDataString("Sala 101")}"));
+        var tabela = html[html.IndexOf("<tbody>", StringComparison.Ordinal)..];
+
+        Assert.Contains("Sala 101", tabela);
+        Assert.DoesNotContain("Laboratório 202", tabela);
+    }
+
+    private static int _diasUsados;
+
+    // Cada teste usa um dia diferente no futuro, porque o armazenamento em memória é compartilhado entre os testes.
+    private static DateTime ProximoDiaLivre() =>
+        DateTime.Today.AddYears(3).AddDays(Interlocked.Increment(ref _diasUsados));
+
+    private sealed record SalaDisponibilidadeResponse(
+        int Id,
+        string Nome,
+        string Bloco,
+        string Andar,
+        string Tipo,
+        int Capacidade,
+        bool? Disponivel);
+
     private sealed record CriarAlocacaoRequest(
         string Sala,
         string Professor,
@@ -150,6 +275,22 @@ public sealed class AlocacoesApiTests : IClassFixture<WebApplicationFactory<Prog
         }));
 
         Assert.Equal(HttpStatusCode.Redirect, resposta.StatusCode);
+    }
+
+    private async Task<HttpResponseMessage> EnviarNovoAgendamento(string sala, string responsavel, DateTime inicio, DateTime fim)
+    {
+        var pagina = await _client.GetStringAsync("/Agendamentos/Index");
+        var token = Regex.Match(pagina, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+        Assert.True(token.Success, "O formulário de novo agendamento deve renderizar o token antiforgery.");
+
+        return await _client.PostAsync("/Agendamentos/Index", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Novo.Sala"] = sala,
+            ["Novo.Responsavel"] = responsavel,
+            ["Novo.Inicio"] = inicio.ToString("yyyy-MM-ddTHH:mm"),
+            ["Novo.Fim"] = fim.ToString("yyyy-MM-ddTHH:mm"),
+            ["__RequestVerificationToken"] = token.Groups[1].Value
+        }));
     }
 
     private async Task<string> ObterTokenAntiforgery()

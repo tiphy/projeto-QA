@@ -19,6 +19,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Configuracoes");
 });
 builder.Services.AddSingleton<AlocacoesStore>();
+builder.Services.AddSingleton<SalasStore>();
 
 var app = builder.Build();
 
@@ -31,6 +32,31 @@ app.UseAuthorization();
 app.MapRazorPages();
 
 // --- Endpoints de Negócio: AlocaSenac ---
+
+// Listar salas; com inicio e fim, informa se cada sala está livre no intervalo
+app.MapGet("/api/salas", (DateTime? inicio, DateTime? fim, SalasStore salas, AlocacoesStore alocacoes) =>
+{
+    if (inicio.HasValue != fim.HasValue)
+    {
+        return Results.BadRequest(new { mensagem = "Informe inicio e fim juntos para consultar a disponibilidade." });
+    }
+
+    if (inicio >= fim)
+    {
+        return Results.BadRequest(new { mensagem = AlocacoesStore.MensagemIntervaloInvalido });
+    }
+
+    var lista = salas.Listar()
+        .Select(sala => new SalaDisponibilidadeResponse(
+            sala.Id, sala.Nome, sala.Bloco, sala.Andar, sala.Tipo, sala.Capacidade,
+            inicio is null ? null : alocacoes.EstaLivre(sala.Nome, inicio.Value, fim!.Value)))
+        .ToList();
+    return Results.Ok(lista);
+})
+.WithName("ListarSalas")
+.WithSummary("Lista as salas cadastradas e, se informados inicio e fim, a disponibilidade de cada uma")
+.Produces<List<SalaDisponibilidadeResponse>>(StatusCodes.Status200OK)
+.Produces(StatusCodes.Status400BadRequest);
 
 // Listar todas as alocações
 app.MapGet("/api/alocacoes", (AlocacoesStore store) => Results.Ok(store.Listar()))
@@ -52,20 +78,16 @@ app.MapGet("/api/alocacoes/{id:guid}", (Guid id, AlocacoesStore store) =>
 // Criar nova alocação com validação de conflito
 app.MapPost("/api/alocacoes", (CriarAlocacaoRequest request, AlocacoesStore store) =>
 {
-    if (string.IsNullOrWhiteSpace(request.Sala) || string.IsNullOrWhiteSpace(request.Professor))
+    var erro = AlocacoesStore.Validar(request);
+    if (erro is not null)
     {
-        return Results.BadRequest(new { mensagem = "Sala e Professor são campos obrigatórios." });
-    }
-
-    if (request.Inicio >= request.Fim)
-    {
-        return Results.BadRequest(new { mensagem = "A data/hora de início deve ser anterior ao término." });
+        return Results.BadRequest(new { mensagem = erro });
     }
 
     var novaAlocacao = store.TentarCriar(request);
     if (novaAlocacao is null)
     {
-        return Results.Conflict(new { mensagem = "Conflito de alocação: a sala já está ocupada neste horário." });
+        return Results.Conflict(new { mensagem = AlocacoesStore.MensagemConflito });
     }
 
     return Results.Created($"/api/alocacoes/{novaAlocacao.Id}", novaAlocacao);

@@ -57,4 +57,42 @@ public sealed class AlocacoesStoreTests
         Assert.True(store.Remover(alocacao.Id));
         Assert.False(store.Remover(alocacao.Id));
     }
+
+    [Theory]
+    [InlineData("", "Ana Souza", 1, AlocacoesStore.MensagemCamposObrigatorios)]
+    [InlineData("Sala 1", " ", 1, AlocacoesStore.MensagemCamposObrigatorios)]
+    [InlineData("Sala 1", "Ana Souza", 0, AlocacoesStore.MensagemIntervaloInvalido)]
+    [InlineData("Sala 1", "Ana Souza", -1, AlocacoesStore.MensagemIntervaloInvalido)]
+    [InlineData("Sala 1", "Ana Souza", 1, null)]
+    public void DeveValidarSolicitacao(string sala, string professor, int horas, string? esperado)
+    {
+        var inicio = DateTime.UtcNow.Date.AddYears(2).AddHours(9);
+        var request = new CriarAlocacaoRequest(sala, professor, inicio, inicio.AddHours(horas));
+
+        Assert.Equal(esperado, AlocacoesStore.Validar(request));
+    }
+
+    [Fact]
+    public void DeveInformarSeSalaEstaLivre()
+    {
+        var store = new AlocacoesStore();
+        var inicio = DateTime.UtcNow.Date.AddYears(2).AddHours(9);
+        store.TentarCriar(new CriarAlocacaoRequest("Sala Livre", "Ana Souza", inicio, inicio.AddHours(2)));
+
+        Assert.False(store.EstaLivre("sala livre", inicio.AddHours(1), inicio.AddHours(3)));
+        Assert.True(store.EstaLivre("Sala Livre", inicio.AddHours(2), inicio.AddHours(3)));
+        Assert.True(store.EstaLivre("Outra Sala", inicio, inicio.AddHours(2)));
+    }
+
+    [Theory]
+    [InlineData("Sala 101", "Sala 101")]
+    [InlineData("  laboratório 202 ", "Laboratório 202")]
+    [InlineData("Sala Inexistente", null)]
+    [InlineData("", null)]
+    public void DeveEncontrarSalaDoCatalogoPeloNome(string nome, string? esperado)
+    {
+        var salas = new SalasStore();
+
+        Assert.Equal(esperado, salas.ObterPorNome(nome)?.Nome);
+    }
 }

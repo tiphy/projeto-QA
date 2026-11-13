@@ -8,11 +8,32 @@
     <div><h1>Agendamentos</h1><p class="muted">Gestão das reservas e solicitações de uso.</p></div>
     <button type="button" onclick="document.getElementById('modal-agendamento').showModal()">Novo agendamento</button>
 </header>
+@if (!string.IsNullOrEmpty(Model.Mensagem))
+{
+    <p class="alerta sucesso" role="status">@Model.Mensagem</p>
+}
 <form class="filters" method="get">
-    <label>Período <input type="date" name="periodo" /></label>
-    <label>Sala <select name="sala"><option value="">Todas</option><option>Sala 101</option><option>Laboratório 202</option></select></label>
-    <label>Status <select name="status"><option value="">Todos</option><option>Pendente</option><option>Aprovado</option><option>Recusado</option></select></label>
+    <label>Período <input type="date" name="Periodo" value="@Model.Periodo?.ToString("yyyy-MM-dd")" /></label>
+    <label>Sala
+        <select name="Sala">
+            <option value="">Todas</option>
+            @foreach (var sala in Model.SalasDisponiveis)
+            {
+                <option value="@sala" selected="@(string.Equals(sala, Model.Sala, StringComparison.OrdinalIgnoreCase))">@sala</option>
+            }
+        </select>
+    </label>
+    <label>Status
+        <select name="Status">
+            <option value="">Todos</option>
+            @foreach (var status in new[] { "Pendente", "Aprovado", "Recusado" })
+            {
+                <option value="@status" selected="@(string.Equals(status, Model.Status, StringComparison.OrdinalIgnoreCase))">@status</option>
+            }
+        </select>
+    </label>
     <button type="submit">Filtrar</button>
+    <a class="button secondary" asp-page="/Agendamentos/Index">Limpar</a>
 </form>
 <section class="panel">
     <div class="table-wrap">
@@ -27,11 +48,11 @@
             {
                 @foreach (var item in Model.Agendamentos)
                 {
-                    <tr><td>@item.Sala</td><td>@item.Professor</td><td>@item.Inicio.ToString("dd/MM/yyyy HH:mm")</td><td>@item.Fim.ToString("dd/MM/yyyy HH:mm")</td><td><span class="status">Pendente</span></td><td><button type="button">Aprovar</button> <button class="secondary" type="button">Recusar</button></td></tr>
+                    <tr><td>@item.Sala</td><td>@item.Professor</td><td>@item.Inicio.ToString("dd/MM/yyyy HH:mm")</td><td>@item.Fim.ToString("dd/MM/yyyy HH:mm")</td><td><span class="status">@IndexModel.StatusPadrao</span></td><td><button type="button">Aprovar</button> <button class="secondary" type="button">Recusar</button></td></tr>
                 }
             }
             </tbody>
         </table>
     </div>
 </section>
-@await Html.PartialAsync("_ModalAgendamento")
+@await Html.PartialAsync("_ModalAgendamento", Model)
