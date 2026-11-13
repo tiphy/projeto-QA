@@ -6,16 +6,66 @@
         {
             <p class="alerta erro" role="alert">@Model.Erro</p>
         }
-        <label>Sala <input name="Novo.Sala" value="@Model.Novo.Sala" required maxlength="120" /></label>
+        <label>Início <input id="novo-inicio" name="Novo.Inicio" type="datetime-local" value="@Model.Novo.Inicio?.ToString("yyyy-MM-ddTHH:mm")" required /></label>
+        <label>Término <input id="novo-fim" name="Novo.Fim" type="datetime-local" value="@Model.Novo.Fim?.ToString("yyyy-MM-ddTHH:mm")" required /></label>
+        <label>Sala
+            <select id="novo-sala" name="Novo.Sala" required data-selecionada="@Model.Novo.Sala">
+                <option value="">Carregando salas…</option>
+            </select>
+        </label>
+        <p id="novo-sala-dica" class="muted">Escolha início e término para ver quais salas estão livres.</p>
         <label>Responsável <input name="Novo.Responsavel" value="@Model.Novo.Responsavel" required maxlength="120" /></label>
-        <label>Início <input name="Novo.Inicio" type="datetime-local" value="@Model.Novo.Inicio?.ToString("yyyy-MM-ddTHH:mm")" required /></label>
-        <label>Término <input name="Novo.Fim" type="datetime-local" value="@Model.Novo.Fim?.ToString("yyyy-MM-ddTHH:mm")" required /></label>
         <div class="actions">
             <button type="submit">Enviar solicitação</button>
             <button class="secondary" type="button" onclick="this.closest('dialog').close()">Cancelar</button>
         </div>
     </form>
 </dialog>
+<script>
+    // Preenche a lista de salas pela API GET /api/salas.
+    // Com início e término preenchidos, a API informa quais salas estão ocupadas nesse horário.
+    (() => {
+        const sala = document.getElementById('novo-sala');
+        const inicio = document.getElementById('novo-inicio');
+        const fim = document.getElementById('novo-fim');
+        const dica = document.getElementById('novo-sala-dica');
+
+        async function carregarSalas() {
+            const params = new URLSearchParams();
+            const comHorario = inicio.value && fim.value && inicio.value < fim.value;
+            if (comHorario) {
+                params.set('inicio', inicio.value);
+                params.set('fim', fim.value);
+            }
+            const selecionada = sala.value || sala.dataset.selecionada || '';
+            try {
+                const resposta = await fetch('/api/salas' + (comHorario ? '?' + params.toString() : ''));
+                if (!resposta.ok) {
+                    throw new Error('HTTP ' + resposta.status);
+                }
+                const salas = await resposta.json();
+                sala.replaceChildren(new Option('Selecione uma sala', ''));
+                for (const item of salas) {
+                    const ocupada = item.disponivel === false;
+                    const texto = `${item.nome} · ${item.bloco} · ${item.capacidade} pessoas` + (ocupada ? ' (ocupada neste horário)' : '');
+                    const opcao = new Option(texto, item.nome, false, item.nome === selecionada && !ocupada);
+                    opcao.disabled = ocupada;
+                    sala.add(opcao);
+                }
+                dica.textContent = comHorario
+                    ? 'Salas ocupadas no horário escolhido aparecem desabilitadas.'
+                    : 'Escolha início e término para ver quais salas estão livres.';
+            } catch {
+                sala.replaceChildren(new Option('Não foi possível carregar as salas', ''));
+                dica.textContent = 'Feche e abra o formulário para tentar de novo.';
+            }
+        }
+
+        inicio.addEventListener('change', carregarSalas);
+        fim.addEventListener('change', carregarSalas);
+        carregarSalas();
+    })();
+</script>
 @if (!string.IsNullOrEmpty(Model.Erro))
 {
     <script>document.getElementById('modal-agendamento').showModal();</script>

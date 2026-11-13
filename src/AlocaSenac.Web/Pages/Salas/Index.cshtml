@@ -16,8 +16,9 @@
     <button type="submit">Filtrar</button>
 </form>
 <section class="grid cards" aria-label="Catálogo de salas">
-    <article class="card"><h2>Sala 101</h2><p class="muted">Bloco A · 1º andar · Sala de aula</p><p>Capacidade: 30 pessoas</p><a class="button secondary" asp-page="/Salas/Detalhes" asp-route-id="1">Ver detalhes</a></article>
-    <article class="card"><h2>Laboratório 202</h2><p class="muted">Bloco B · 2º andar · Laboratório</p><p>Capacidade: 24 pessoas</p><a class="button secondary" asp-page="/Salas/Detalhes" asp-route-id="2">Ver detalhes</a></article>
-    <article class="card"><h2>Auditório Central</h2><p class="muted">Bloco A · Térreo · Auditório</p><p>Capacidade: 120 pessoas</p><a class="button secondary" asp-page="/Salas/Detalhes" asp-route-id="3">Ver detalhes</a></article>
+    @foreach (var sala in Model.Salas)
+    {
+        <article class="card"><h2>@sala.Nome</h2><p class="muted">@sala.Bloco · @sala.Andar · @sala.Tipo</p><p>Capacidade: @sala.Capacidade pessoas</p><a class="button secondary" asp-page="/Salas/Detalhes" asp-route-id="@sala.Id">Ver detalhes</a></article>
+    }
 </section>
 @await Html.PartialAsync("_ModalNovaSala")

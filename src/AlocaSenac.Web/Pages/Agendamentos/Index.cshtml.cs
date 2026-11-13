@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AlocaSenac.Web.Pages.Agendamentos;
 
-public sealed class IndexModel(AlocacoesStore store) : PageModel
+public sealed class IndexModel(AlocacoesStore store, SalasStore salas) : PageModel
 {
     public const string StatusPadrao = "Pendente";
 
@@ -35,16 +35,24 @@ public sealed class IndexModel(AlocacoesStore store) : PageModel
         Carregar();
     }
 
+    public const string MensagemSalaInvalida = "Escolha uma sala da lista.";
+
     public IActionResult OnPost()
     {
+        var sala = salas.ObterPorNome(Novo.Sala);
         var request = new CriarAlocacaoRequest(
-            Novo.Sala?.Trim() ?? string.Empty,
+            sala?.Nome ?? Novo.Sala?.Trim() ?? string.Empty,
             Novo.Responsavel?.Trim() ?? string.Empty,
             Novo.Inicio ?? default,
             Novo.Fim ?? default);
 
         // Mesmas regras e mensagens da API POST /api/alocacoes (400 e 409).
         Erro = AlocacoesStore.Validar(request);
+        if (Erro is null && sala is null)
+        {
+            Erro = MensagemSalaInvalida;
+        }
+
         if (Erro is null && store.TentarCriar(request) is null)
         {
             Erro = AlocacoesStore.MensagemConflito;
@@ -63,8 +71,9 @@ public sealed class IndexModel(AlocacoesStore store) : PageModel
     private void Carregar()
     {
         var todos = store.Listar();
-        SalasDisponiveis = todos
-            .Select(alocacao => alocacao.Sala)
+        SalasDisponiveis = salas.Listar()
+            .Select(sala => sala.Nome)
+            .Concat(todos.Select(alocacao => alocacao.Sala))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Order(StringComparer.CurrentCultureIgnoreCase)
             .ToList();

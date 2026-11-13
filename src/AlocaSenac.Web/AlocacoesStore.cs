@@ -50,12 +50,7 @@ public sealed class AlocacoesStore
     {
         lock (_sync)
         {
-            bool temConflito = _alocacoes.Any(existing =>
-                existing.Sala.Equals(request.Sala, StringComparison.OrdinalIgnoreCase) &&
-                request.Inicio < existing.Fim &&
-                request.Fim > existing.Inicio);
-
-            if (temConflito)
+            if (TemConflito(request.Sala, request.Inicio, request.Fim))
             {
                 return null;
             }
@@ -70,6 +65,21 @@ public sealed class AlocacoesStore
             return alocacao;
         }
     }
+
+    /// <summary>Indica se a sala está livre em todo o intervalo [inicio, fim).</summary>
+    public bool EstaLivre(string sala, DateTime inicio, DateTime fim)
+    {
+        lock (_sync)
+        {
+            return !TemConflito(sala, inicio, fim);
+        }
+    }
+
+    private bool TemConflito(string sala, DateTime inicio, DateTime fim) =>
+        _alocacoes.Any(existing =>
+            existing.Sala.Equals(sala, StringComparison.OrdinalIgnoreCase) &&
+            inicio < existing.Fim &&
+            fim > existing.Inicio);
 
     public bool Remover(Guid id)
     {
