@@ -57,4 +57,18 @@ public sealed class AlocacoesStoreTests
         Assert.True(store.Remover(alocacao.Id));
         Assert.False(store.Remover(alocacao.Id));
     }
+
+    [Theory]
+    [InlineData("", "Ana Souza", 1, AlocacoesStore.MensagemCamposObrigatorios)]
+    [InlineData("Sala 1", " ", 1, AlocacoesStore.MensagemCamposObrigatorios)]
+    [InlineData("Sala 1", "Ana Souza", 0, AlocacoesStore.MensagemIntervaloInvalido)]
+    [InlineData("Sala 1", "Ana Souza", -1, AlocacoesStore.MensagemIntervaloInvalido)]
+    [InlineData("Sala 1", "Ana Souza", 1, null)]
+    public void DeveValidarSolicitacao(string sala, string professor, int horas, string? esperado)
+    {
+        var inicio = DateTime.UtcNow.Date.AddYears(2).AddHours(9);
+        var request = new CriarAlocacaoRequest(sala, professor, inicio, inicio.AddHours(horas));
+
+        Assert.Equal(esperado, AlocacoesStore.Validar(request));
+    }
 }

@@ -1,13 +1,22 @@
+@model AlocaSenac.Web.Pages.Agendamentos.IndexModel
 <dialog id="modal-agendamento" aria-labelledby="modal-agendamento-titulo">
-    <form method="post">
+    <form method="post" asp-page="/Agendamentos/Index">
         <h2 id="modal-agendamento-titulo">Novo agendamento</h2>
-        <label>Sala <input name="Sala" required maxlength="120" /></label>
-        <label>Responsável <input name="Responsavel" required maxlength="120" /></label>
-        <label>Início <input name="Inicio" type="datetime-local" required /></label>
-        <label>Término <input name="Fim" type="datetime-local" required /></label>
+        @if (!string.IsNullOrEmpty(Model.Erro))
+        {
+            <p class="alerta erro" role="alert">@Model.Erro</p>
+        }
+        <label>Sala <input name="Novo.Sala" value="@Model.Novo.Sala" required maxlength="120" /></label>
+        <label>Responsável <input name="Novo.Responsavel" value="@Model.Novo.Responsavel" required maxlength="120" /></label>
+        <label>Início <input name="Novo.Inicio" type="datetime-local" value="@Model.Novo.Inicio?.ToString("yyyy-MM-ddTHH:mm")" required /></label>
+        <label>Término <input name="Novo.Fim" type="datetime-local" value="@Model.Novo.Fim?.ToString("yyyy-MM-ddTHH:mm")" required /></label>
         <div class="actions">
             <button type="submit">Enviar solicitação</button>
             <button class="secondary" type="button" onclick="this.closest('dialog').close()">Cancelar</button>
         </div>
     </form>
 </dialog>
+@if (!string.IsNullOrEmpty(Model.Erro))
+{
+    <script>document.getElementById('modal-agendamento').showModal();</script>
+}

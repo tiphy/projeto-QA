@@ -7,6 +7,29 @@ public sealed class AlocacoesStore
         new(Guid.NewGuid(), "Auditório Principal", "Profa. Maria", DateTime.UtcNow.Date.AddHours(14), DateTime.UtcNow.Date.AddHours(17))
     ];
 
+    public const string MensagemCamposObrigatorios = "Sala e Professor são campos obrigatórios.";
+    public const string MensagemIntervaloInvalido = "A data/hora de início deve ser anterior ao término.";
+    public const string MensagemConflito = "Conflito de alocação: a sala já está ocupada neste horário.";
+
+    /// <summary>
+    /// Regras de validação compartilhadas pela API e pela tela de Agendamentos.
+    /// Retorna a mensagem de erro, ou null quando a solicitação é válida.
+    /// </summary>
+    public static string? Validar(CriarAlocacaoRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Sala) || string.IsNullOrWhiteSpace(request.Professor))
+        {
+            return MensagemCamposObrigatorios;
+        }
+
+        if (request.Inicio >= request.Fim)
+        {
+            return MensagemIntervaloInvalido;
+        }
+
+        return null;
+    }
+
     public List<AlocacaoResponse> Listar()
     {
         lock (_sync)

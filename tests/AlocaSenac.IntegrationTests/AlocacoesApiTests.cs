@@ -126,6 +126,69 @@ public sealed class AlocacoesApiTests : IClassFixture<WebApplicationFactory<Prog
         Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
     }
 
+    [Fact]
+    public async Task DeveCriarAgendamentoPelaTela()
+    {
+        await EntrarComoAdministrador();
+        var sala = $"Sala Tela {Guid.NewGuid():N}";
+        var inicio = DateTime.Today.AddYears(2).AddHours(9);
+
+        var resposta = await EnviarNovoAgendamento(sala, "Ana Souza", inicio, inicio.AddHours(1));
+
+        Assert.Equal(HttpStatusCode.Redirect, resposta.StatusCode);
+        var alocacoes = await _client.GetFromJsonAsync<List<AlocacaoResponse>>("/api/alocacoes");
+        Assert.Contains(alocacoes!, alocacao => alocacao.Sala == sala && alocacao.Professor == "Ana Souza");
+
+        var lista = await _client.GetStringAsync("/Agendamentos/Index");
+        Assert.Contains(sala, WebUtility.HtmlDecode(lista));
+    }
+
+    [Fact]
+    public async Task DeveMostrarConflitoAoAgendarPelaTela()
+    {
+        await EntrarComoAdministrador();
+        var sala = $"Sala Conflito {Guid.NewGuid():N}";
+        var inicio = DateTime.Today.AddYears(2).AddHours(14);
+
+        var primeira = await EnviarNovoAgendamento(sala, "Ana Souza", inicio, inicio.AddHours(2));
+        var sobreposta = await EnviarNovoAgendamento(sala, "Bruno Lima", inicio.AddHours(1), inicio.AddHours(3));
+        var html = WebUtility.HtmlDecode(await sobreposta.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.Redirect, primeira.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sobreposta.StatusCode);
+        Assert.Contains("Conflito de alocação", html);
+    }
+
+    [Fact]
+    public async Task DeveRecusarIntervaloInvalidoPelaTela()
+    {
+        await EntrarComoAdministrador();
+        var inicio = DateTime.Today.AddYears(2).AddHours(10);
+
+        var resposta = await EnviarNovoAgendamento($"Sala {Guid.NewGuid():N}", "Ana Souza", inicio, inicio);
+        var html = WebUtility.HtmlDecode(await resposta.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        Assert.Contains("deve ser anterior ao término", html);
+    }
+
+    [Fact]
+    public async Task DeveFiltrarAgendamentosPorSala()
+    {
+        await EntrarComoAdministrador();
+        var salaA = $"Sala Filtro A {Guid.NewGuid():N}";
+        var salaB = $"Sala Filtro B {Guid.NewGuid():N}";
+        var inicio = DateTime.Today.AddYears(2).AddHours(8);
+        await EnviarNovoAgendamento(salaA, "Ana Souza", inicio, inicio.AddHours(1));
+        await EnviarNovoAgendamento(salaB, "Bruno Lima", inicio, inicio.AddHours(1));
+
+        var html = WebUtility.HtmlDecode(await _client.GetStringAsync($"/Agendamentos/Index?Sala={Uri.EscapeDataString(salaA)}"));
+        var tabela = html[html.IndexOf("<tbody>", StringComparison.Ordinal)..];
+
+        Assert.Contains(salaA, tabela);
+        Assert.DoesNotContain(salaB, tabela);
+    }
+
     private sealed record CriarAlocacaoRequest(
         string Sala,
         string Professor,
@@ -150,6 +213,22 @@ public sealed class AlocacoesApiTests : IClassFixture<WebApplicationFactory<Prog
         }));
 
         Assert.Equal(HttpStatusCode.Redirect, resposta.StatusCode);
+    }
+
+    private async Task<HttpResponseMessage> EnviarNovoAgendamento(string sala, string responsavel, DateTime inicio, DateTime fim)
+    {
+        var pagina = await _client.GetStringAsync("/Agendamentos/Index");
+        var token = Regex.Match(pagina, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+        Assert.True(token.Success, "O formulário de novo agendamento deve renderizar o token antiforgery.");
+
+        return await _client.PostAsync("/Agendamentos/Index", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Novo.Sala"] = sala,
+            ["Novo.Responsavel"] = responsavel,
+            ["Novo.Inicio"] = inicio.ToString("yyyy-MM-ddTHH:mm"),
+            ["Novo.Fim"] = fim.ToString("yyyy-MM-ddTHH:mm"),
+            ["__RequestVerificationToken"] = token.Groups[1].Value
+        }));
     }
 
     private async Task<string> ObterTokenAntiforgery()

@@ -52,20 +52,16 @@ app.MapGet("/api/alocacoes/{id:guid}", (Guid id, AlocacoesStore store) =>
 // Criar nova alocação com validação de conflito
 app.MapPost("/api/alocacoes", (CriarAlocacaoRequest request, AlocacoesStore store) =>
 {
-    if (string.IsNullOrWhiteSpace(request.Sala) || string.IsNullOrWhiteSpace(request.Professor))
+    var erro = AlocacoesStore.Validar(request);
+    if (erro is not null)
     {
-        return Results.BadRequest(new { mensagem = "Sala e Professor são campos obrigatórios." });
-    }
-
-    if (request.Inicio >= request.Fim)
-    {
-        return Results.BadRequest(new { mensagem = "A data/hora de início deve ser anterior ao término." });
+        return Results.BadRequest(new { mensagem = erro });
     }
 
     var novaAlocacao = store.TentarCriar(request);
     if (novaAlocacao is null)
     {
-        return Results.Conflict(new { mensagem = "Conflito de alocação: a sala já está ocupada neste horário." });
+        return Results.Conflict(new { mensagem = AlocacoesStore.MensagemConflito });
     }
 
     return Results.Created($"/api/alocacoes/{novaAlocacao.Id}", novaAlocacao);
