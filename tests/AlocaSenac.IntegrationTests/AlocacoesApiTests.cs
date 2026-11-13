@@ -148,7 +148,8 @@ public sealed class AlocacoesApiTests : IClassFixture<WebApplicationFactory<Prog
         var salas = await _client.GetFromJsonAsync<List<SalaDisponibilidadeResponse>>(
             $"/api/salas?inicio={inicio.AddHours(1):yyyy-MM-ddTHH:mm}&fim={inicio.AddHours(3):yyyy-MM-ddTHH:mm}");
 
-        Assert.False(salas!.Single(sala => sala.Nome == "Sala 101").Disponivel);
+        Assert.NotNull(salas);
+        Assert.False(salas.Single(sala => sala.Nome == "Sala 101").Disponivel);
         Assert.True(salas.Single(sala => sala.Nome == "Laboratório 202").Disponivel);
     }
 
